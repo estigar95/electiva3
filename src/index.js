@@ -7,6 +7,9 @@ const indexRouter = require("./routers/indexRouter");
 const clienteRouter = require('./routers/clienteRouter');
 const conceptoUsoRouter = require('./routers/conceptoUsoRouter');
 const reglasAsignacionRouter = require('./routers/reglasAsignacionRouter');
+const vencimientoPuntosRouter = require('./routers/vencimientoPuntosRouter');
+const usoPuntosRouter = require('./routers/usoPuntosRouter');
+const bolsaPuntosRouter = require('./routers/bolsaPuntosRouter');
 
 //settings
 app.set("port", process.env.PORT || 3001);
@@ -28,6 +31,9 @@ app.use(indexRouter);
 app.use('/clientes', clienteRouter);
 app.use('/conceptos-uso', conceptoUsoRouter);
 app.use('/reglas_asignacion', reglasAsignacionRouter);
+app.use('/vencimiento_puntos', vencimientoPuntosRouter);
+app.use('/uso_puntos', usoPuntosRouter);
+app.use('/bolsa_puntos', bolsaPuntosRouter);
 
 //config
 app.listen(app.get("port"), () => {
