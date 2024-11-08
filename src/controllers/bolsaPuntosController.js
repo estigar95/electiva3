@@ -176,3 +176,157 @@ exports.cargarPuntos = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor.' });
   }
 };
+
+exports.utilizarPuntos = async (req, res) => {
+  const { cliente_id, concepto_id } = req.body;
+
+  try {
+    // Validar que los parámetros necesarios estén presentes
+    if (!cliente_id || !concepto_id) {
+      return res.status(400).json({ error: 'cliente_id y concepto_id son requeridos.' });
+    }
+
+    // Verificar que el cliente exista
+    const clienteResult = await pool.query('SELECT * FROM cliente WHERE id = $1', [cliente_id]);
+    if (clienteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado.' });
+    }
+    const cliente = clienteResult.rows[0];
+
+    // Obtener el concepto de uso y los puntos requeridos
+    const conceptoResult = await pool.query('SELECT * FROM concepto_uso WHERE id = $1', [concepto_id]);
+    if (conceptoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Concepto de uso no encontrado.' });
+    }
+    const concepto = conceptoResult.rows[0];
+    const puntosRequeridos = concepto.puntos_requeridos;
+
+    // Verificar que el cliente tenga suficientes puntos
+    const puntosTotalesResult = await pool.query(
+      'SELECT SUM(saldo_puntos) AS total_puntos FROM bolsa_puntos WHERE cliente_id = $1 AND saldo_puntos > 0',
+      [cliente_id]
+    );
+    const totalPuntosDisponibles = parseInt(puntosTotalesResult.rows[0].total_puntos || '0');
+
+    if (totalPuntosDisponibles < puntosRequeridos) {
+      return res.status(400).json({ error: 'El cliente no tiene suficientes puntos para este concepto.' });
+    }
+
+    // Obtener las bolsas de puntos ordenadas por fecha de asignación (FIFO)
+    const bolsasResult = await pool.query(
+      'SELECT * FROM bolsa_puntos WHERE cliente_id = $1 AND saldo_puntos > 0 ORDER BY fecha_asignacion ASC',
+      [cliente_id]
+    );
+    const bolsas = bolsasResult.rows;
+
+    // Comenzar una transacción
+    await pool.query('BEGIN');
+
+    // Insertar en uso_puntos_cabecera
+    const usoCabeceraResult = await pool.query(
+      `INSERT INTO uso_puntos_cabecera (cliente_id, puntaje_utilizado, fecha, concepto_id)
+       VALUES ($1, $2, NOW(), $3) RETURNING *`,
+      [cliente_id, puntosRequeridos, concepto_id]
+    );
+    const usoCabecera = usoCabeceraResult.rows[0];
+
+    let puntosPorCubrir = puntosRequeridos;
+    const detalles = [];
+
+    // Iterar sobre las bolsas y descontar puntos
+    for (const bolsa of bolsas) {
+      if (puntosPorCubrir <= 0) break;
+
+      const puntosADescontar = Math.min(bolsa.saldo_puntos, puntosPorCubrir);
+
+      // Actualizar la bolsa de puntos
+      await pool.query(
+        `UPDATE bolsa_puntos
+         SET puntaje_utilizado = puntaje_utilizado + $1,
+             saldo_puntos = saldo_puntos - $1
+         WHERE id = $2`,
+        [puntosADescontar, bolsa.id]
+      );
+
+      // Insertar en uso_puntos_detalle
+      const usoDetalleResult = await pool.query(
+        `INSERT INTO uso_puntos_detalle (cabecera_id, puntaje_utilizado, bolsa_puntos_id)
+         VALUES ($1, $2, $3) RETURNING *`,
+        [usoCabecera.id, puntosADescontar, bolsa.id]
+      );
+      detalles.push(usoDetalleResult.rows[0]);
+
+      puntosPorCubrir -= puntosADescontar;
+    }
+
+    // Confirmar la transacción
+    await pool.query('COMMIT');
+
+    res.status(200).json({
+      message: 'Puntos utilizados exitosamente.',
+      uso_puntos_cabecera: usoCabecera,
+      uso_puntos_detalle: detalles,
+    });
+  } catch (err) {
+    // Revertir la transacción en caso de error
+    await pool.query('ROLLBACK');
+    console.error('Error al utilizar puntos:', err);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+};
+
+exports.getPuntosPorMonto = async (req, res) => {
+  try {
+    // Obtener el monto de la solicitud
+    const monto = parseFloat(req.query.monto);
+
+    if (isNaN(monto) || monto <= 0) {
+      return res.status(400).json({ error: 'El parámetro "monto" es requerido y debe ser un número positivo.' });
+    }
+
+    // Obtener la regla de asignación de puntos aplicable
+    let reglaQuery = `
+      SELECT *
+      FROM regla_asignacion
+      WHERE ($1 BETWEEN limite_inferior AND limite_superior)
+      ORDER BY id ASC
+      LIMIT 1
+    `;
+    const reglaValues = [monto];
+    let reglaResult = await pool.query(reglaQuery, reglaValues);
+
+    // Si no se encontró una regla específica, buscar una regla general (limites nulos)
+    if (reglaResult.rows.length === 0) {
+      reglaQuery = `
+        SELECT *
+        FROM regla_asignacion
+        WHERE limite_inferior IS NULL AND limite_superior IS NULL
+        LIMIT 1
+      `;
+      reglaResult = await pool.query(reglaQuery);
+      if (reglaResult.rows.length === 0) {
+        return res.status(400).json({ error: 'No se encontró una regla de asignación de puntos aplicable.' });
+      }
+    }
+
+    const regla = reglaResult.rows[0];
+    const montoEquivalencia = regla.monto_equivalencia;
+
+    // Calcular el puntaje asignado
+    const puntajeAsignado = Math.round(monto / montoEquivalencia);
+
+    res.status(200).json({
+      monto: monto,
+      puntos_equivalentes: puntajeAsignado,
+      regla_aplicada: {
+        id: regla.id,
+        limite_inferior: regla.limite_inferior,
+        limite_superior: regla.limite_superior,
+        monto_equivalencia: regla.monto_equivalencia,
+      },
+    });
+  } catch (err) {
+    console.error('Error al consultar puntos por monto:', err);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+};

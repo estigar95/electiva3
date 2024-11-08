@@ -12,4 +12,10 @@ router.get('/rango', bolsaPuntosController.getBolsasPuntosByRango);
 // Ruta para cargar puntos
 router.post('/cargar-puntos', bolsaPuntosController.cargarPuntos);
 
+// Utilizar puntos (POST)
+router.post('/utilizar', bolsaPuntosController.utilizarPuntos);
+
+// Consultar puntos equivalentes a un monto X (GET)
+router.get('/puntos_por_monto', bolsaPuntosController.getPuntosPorMonto);
+
 module.exports = router;
