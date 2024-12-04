@@ -1,5 +1,4 @@
 # electiva3
-Proyecto de Programa de Fidelización
 Este proyecto implementa un sistema de programa de fidelización de clientes, que incluye funcionalidades como gestión de puntos, promociones, desafíos e insignias. Está desarrollado utilizando Node.js y PostgreSQL para el backend, y se puede interactuar con él a través de APIs utilizando Postman.
 
 Requisitos Previos
