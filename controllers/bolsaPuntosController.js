@@ -1,5 +1,7 @@
 const pool = require("../config/config");
 const { calcularEdad } = require('../helpers/calcularEdad'); 
+const { obtenerMontoTotal } = require('../helpers/calcularSumatoriaTotal'); 
+
 
 // Obtener bolsas de puntos por cliente
 exports.getBolsasPuntosByCliente = async (req, res) => {
@@ -90,18 +92,29 @@ exports.cargarPuntos = async (req, res) => {
       return res.status(404).json({ error: 'Cliente no encontrado.' });
     }
 
-    const cliente = clienteResult.rows[0];
-
-    // Calcula la edad del cliente
     
-    const edadCliente = calcularEdad(cliente.fecha_nacimiento);
-    let puntosAdicionales = 0;
+const cliente = clienteResult.rows[0];
 
+  // Calcula la edad del cliente
+const edadCliente = calcularEdad(cliente.fecha_nacimiento);
+let puntosAdicionales = 0;
+
+// Obtener la suma del monto de operaciones del cliente
+/*const montoResult = await pool.query(`
+                                        SELECT SUM(monto_operacion) AS monto_total
+                                        FROM
+                                        bolsa_puntos
+                                        WHERE cliente_id = $1`, [cliente_id]);
+
+const montoTotal = montoResult.rows[0].monto_total;*/
+
+const montoTotal = await obtenerMontoTotal(cliente_id)+monto_operacion;
     
-    //Segmentacion clientes mayores a 60 años
-    // Verificar si el cliente tiene más de 60 años y aplicar puntos adicionales
-    if (edadCliente > 60) {
-      puntosAdicionales = 10; // Ejemplo: otorgar 10 puntos adicionales a mayores de 60 años
+    
+    //Segmentacion clientes mayores a 60 años y monto de compras totales mayores a 1 millon
+    // Verificar si el cliente tiene más de 60 años o con la operacion actual supera los 1millon
+    if (edadCliente > 60|| montoTotal > 1000000) {
+      puntosAdicionales = 10; 
     }
 
     // Obtener la regla de asignación de puntos aplicable
