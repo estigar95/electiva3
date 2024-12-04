@@ -13,7 +13,7 @@ router.get('/rango', bolsaPuntosController.getBolsasPuntosByRango);
 router.post('/cargar-puntos', bolsaPuntosController.cargarPuntos);
 
 // Utilizar puntos (POST)
-router.post('/utilizar', bolsaPuntosController.utilizarPuntos);
+router.post('/canjear_puntos', bolsaPuntosController.canjear_puntos);
 
 // Consultar puntos equivalentes a un monto X (GET)
 router.get('/puntos_por_monto', bolsaPuntosController.getPuntosPorMonto);

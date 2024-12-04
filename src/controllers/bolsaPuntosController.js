@@ -177,7 +177,7 @@ exports.cargarPuntos = async (req, res) => {
   }
 };
 
-exports.utilizarPuntos = async (req, res) => {
+exports.canjear_puntos = async (req, res) => {
   const { cliente_id, concepto_id } = req.body;
 
   try {
@@ -212,7 +212,7 @@ exports.utilizarPuntos = async (req, res) => {
       return res.status(400).json({ error: 'El cliente no tiene suficientes puntos para este concepto.' });
     }
 
-    // Obtener las bolsas de puntos ordenadas por fecha de asignación (FIFO)
+    // Obtener las bolsas de puntos ordenadas por fecha de asignación 
     const bolsasResult = await pool.query(
       'SELECT * FROM bolsa_puntos WHERE cliente_id = $1 AND saldo_puntos > 0 ORDER BY fecha_asignacion ASC',
       [cliente_id]
