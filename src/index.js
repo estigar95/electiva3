@@ -11,6 +11,7 @@ const vencimientoPuntosRouter = require('./routers/vencimientoPuntosRouter');
 const usoPuntosRouter = require('./routers/usoPuntosRouter');
 const bolsaPuntosRouter = require('./routers/bolsaPuntosRouter');
 const gamificacionRouter = require('./routers/gamificacion');
+const promocionRouter = require('./routers/promocion');
 
 //settings
 app.set("port", process.env.PORT || 3001);
@@ -36,6 +37,7 @@ app.use('/vencimiento_puntos', vencimientoPuntosRouter);
 app.use('/uso_puntos', usoPuntosRouter);
 app.use('/bolsa_puntos', bolsaPuntosRouter);
 app.use('/gamificacion', gamificacionRouter);
+app.use('/promo', promocionRouter);
 
 //config
 app.listen(app.get("port"), () => {
