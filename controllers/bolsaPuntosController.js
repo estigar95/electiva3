@@ -1,6 +1,7 @@
 const pool = require("../config/config");
 const { calcularEdad } = require('../helpers/calcularEdad'); 
 const { obtenerMontoTotal } = require('../helpers/calcularSumatoriaTotal'); 
+const { asignarNivelFidelizacion } = require('../helpers/actualizarNivelesClientes'); 
 
 
 // Obtener bolsas de puntos por cliente
@@ -99,14 +100,6 @@ const cliente = clienteResult.rows[0];
 const edadCliente = calcularEdad(cliente.fecha_nacimiento);
 let puntosAdicionales = 0;
 
-// Obtener la suma del monto de operaciones del cliente
-/*const montoResult = await pool.query(`
-                                        SELECT SUM(monto_operacion) AS monto_total
-                                        FROM
-                                        bolsa_puntos
-                                        WHERE cliente_id = $1`, [cliente_id]);
-
-const montoTotal = montoResult.rows[0].monto_total;*/
 
 const montoTotal = await obtenerMontoTotal(cliente_id)+monto_operacion;
     
@@ -194,6 +187,8 @@ const montoTotal = await obtenerMontoTotal(cliente_id)+monto_operacion;
     ];
 
     const insertResult = await pool.query(insertQuery, insertValues);
+
+    await asignarNivelFidelizacion(cliente_id,puntajeAsignado);
 
     res.status(201).json({
       message: 'Puntos cargados exitosamente.',

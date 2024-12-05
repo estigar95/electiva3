@@ -6,6 +6,6 @@ const reglasAsignacionController = require('../controllers/reglasAsignacionContr
 router.post('/', reglasAsignacionController.createRegla); // Crear regla
 router.get('/', reglasAsignacionController.getReglas); // Obtener todas las reglas
 router.put('/:id', reglasAsignacionController.updateRegla); // Actualizar regla
-router.delete('/:id', reglasAsignacionController.deleteRegla); // Eliminar regla
+router.delete('/:id', reglasAsignacionController.deleteRegla); // Eliminar regla*/
 
 module.exports = router;

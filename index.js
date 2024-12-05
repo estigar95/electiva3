@@ -9,7 +9,8 @@ const reglasAsignacionRouter = require('./routers/reglasAsignacionRouter');
 const vencimientoPuntosRouter = require('./routers/vencimientoPuntosRouter');
 const usoPuntosRouter = require('./routers/usoPuntosRouter');
 const bolsaPuntosRouter = require('./routers/bolsaPuntosRouter');
-const segmentosRouter=require('./routers/segmentosRouter');
+const nivelFidelizacionRouter=require('./routers/nivelFidelizacionRouter');
+const clientesnivelRouter=require('./routers/clientesNivelRouter');
 
 
 //settings
@@ -35,8 +36,8 @@ app.use('/reglas_asignacion', reglasAsignacionRouter);
 app.use('/vencimiento_puntos', vencimientoPuntosRouter);
 app.use('/uso_puntos', usoPuntosRouter);
 app.use('/bolsa_puntos', bolsaPuntosRouter);
-app.use('/segmento',segmentosRouter);
-app.use('/segmento_cliente',segmentosRouter);
+app.use('/nivel-fidelizacion',nivelFidelizacionRouter);
+app.use('/nivel-cliente',clientesnivelRouter);
 
 //config
 app.listen(app.get("port"), () => {

@@ -18,6 +18,7 @@ exports.createRegla = (req, res) => {
         });
 };
 
+
 // Obtener todas las reglas de asignación
 exports.getReglas = (req, res) => {
     const query = 'SELECT * FROM regla_asignacion';
