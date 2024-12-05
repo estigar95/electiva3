@@ -75,4 +75,20 @@ se insertará con el nivel 1
 
 Se vuelve a cargar una bolsa de puntos y en total se le asigna 3 puntos, y con la operacion anterior
 ya acumula 6 puntos en total, por lo tanto cliente_nivel_fidelizacion se actualiza y pasara a visualizarse
-a nivel 2 con el mismo cliente
+a nivel 2 con el mismo cliente.
+
+--------TABLA NIVELES DE FIDELIZACION
+CREATE TABLE niveles_fidelizacion (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    puntos_minimos INT NOT NULL,
+    puntos_maximos INT NULL 
+);
+
+-----TABLA CLIENTES_NIVELES---------
+CREATE TABLE cliente_nivel_fidelizacion (
+    cliente_id INT PRIMARY KEY,
+    nivel_fidelizacion_id INT REFERENCES niveles_fidelizacion(id),
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
